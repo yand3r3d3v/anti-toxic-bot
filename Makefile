@@ -9,25 +9,25 @@ format:
 
 # Docker commands
 build:
-	docker build -t tg-bot .
+	docker build -t antitoxicbot .
 
 run:
-	docker run --env-file .env -p 5000:5000 --name tg-bot tg-bot
+	docker run --env-file .env -p 5000:5000 --name bot antitoxicbot
 
 stop:
-	docker stop tg-bot
-	docker rm tg-bot
+	docker stop bot
+	docker rm bot
 
 restart: stop build run
 
 clean:
-	docker rmi tg-bot
+	docker rmi bot
 
 logs:
-	docker logs -f tg-bot
+	docker logs -f bot
 
 shell:
-	docker exec -it tg-bot /bin/sh
+	docker exec -it bot /bin/sh
 
 prune:
 	docker system prune -f
