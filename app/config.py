@@ -1,11 +1,18 @@
 from typing import Any, List, Optional, Tuple, Type
-from pydantic_settings import BaseSettings, EnvSettingsSource, PydanticBaseSettingsSource
-from pydantic import Field, validator
+
+from pydantic import Field
 from pydantic.fields import FieldInfo
+from pydantic_settings import (
+    BaseSettings,
+    EnvSettingsSource,
+    PydanticBaseSettingsSource,
+)
 
 
 class MyCustomSource(EnvSettingsSource):
-    def prepare_field_value(self, field_name: str, field: FieldInfo, value: Any, value_is_complex: bool) -> Any:
+    def prepare_field_value(
+        self, field_name: str, field: FieldInfo, value: Any, value_is_complex: bool
+    ) -> Any:
         if field_name == "ADMIN_USERNAMES" and value:
             return value.split(",")
         return super().prepare_field_value(field_name, field, value, value_is_complex)
