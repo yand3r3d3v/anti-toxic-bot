@@ -12,7 +12,7 @@ build:
 	docker build -t antitoxicbot .
 
 run:
-	docker run --env-file .env -p 5000:5000 --name bot antitoxicbot
+	docker run --env-file .env --name bot antitoxicbot
 
 stop:
 	docker stop bot
@@ -21,7 +21,7 @@ stop:
 restart: stop build run
 
 clean:
-	docker rmi bot
+	docker rmi antitoxicbot
 
 logs:
 	docker logs -f bot

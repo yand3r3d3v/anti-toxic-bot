@@ -1,0 +1,27 @@
+# Виртуальные окружения
+.venv/
+env/
+venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Git
+.git/
+.gitignore
+
+# Секреты и переменные окружения
+.env
+.env.*
+
+# Документация
+README.md
+LICENSE
+Makefile
+
+# IDE и редакторы
+.vscode/
+.idea/
+*.swp
