@@ -1,21 +1,25 @@
+import logging
 from datetime import datetime
 
+import aiosqlite
 from aiogram import Router
+from aiogram.enums.parse_mode import ParseMode
+from aiogram.filters import Command
 from aiogram.types import Message
 from telegram_bot_pagination import InlineKeyboardPaginator
 
 router = Router()
 
-
-@router.message()
-async def on_message(message: Message): ...
+logger = logging.getLogger(__name__)
 
 
-async def mute_history(update: Update, context: CallbackContext):
+@router.message(Command("mute_history"))
+async def on_message(message: Message):
     logger.info("Received /mute_history command.")
-    chat_id = update.message.chat_id
-    user_id = update.message.from_user.id
-    page = int(context.args[0]) if context.args else 1
+    chat_id = message.chat_id
+    user_id = message.from_user.id
+    # page = int(context.args[0]) if context.args else 1
+    page = 1
     items_per_page = 10
 
     async with aiosqlite.connect("mute_bot.db") as db:
@@ -35,7 +39,7 @@ async def mute_history(update: Update, context: CallbackContext):
         for row in rows:
             user_id, until = row
             until = datetime.fromisoformat(until)
-            user = await context.bot.get_chat_member(chat_id, user_id).user
+            user = await message.bot.get_chat_member(chat_id, user_id).user
             message += f"- Пользователь <a href='tg://user?id={user_id}'>{user.username or user.full_name}</a> был заблокирован до {until.strftime('%Y-%м-%d %H:%М:%S')}\n"
 
         paginator = InlineKeyboardPaginator(
@@ -43,8 +47,8 @@ async def mute_history(update: Update, context: CallbackContext):
             current_page=page,
             data_pattern="mute_history#{page}",
         )
-        await update.message.reply_text(
+        await message.reply(
             message, parse_mode=ParseMode.HTML, reply_markup=paginator.markup
         )
     else:
-        await update.message.reply_text("📜 Нет записей о блокировках.")
+        await message.reply("📜 Нет записей о блокировках.")

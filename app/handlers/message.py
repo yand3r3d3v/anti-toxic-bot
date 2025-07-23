@@ -1,21 +1,28 @@
+import logging
 from datetime import datetime, timedelta, timezone
 
-from aiogram import Router
+import aiosqlite
+from aiogram import F, Router
 from aiogram.types import Message
+from aiogram.types.chat_permissions import ChatPermissions
+from config import config
+from handlers.unmute import unmute_user
+from perspective import Attribute, Perspective
+
+p = Perspective(key=config.PERSPECTIVE_API_KEY)
+
 
 router = Router()
+logger = logging.getLogger(__name__)
 
 
-@router.message()
-async def on_message(message: Message): ...
-
-
-async def check_message(update: Update, context: CallbackContext):
-    text = update.message.text
-    user_id = update.message.from_user.id
-    chat_id = update.message.chat_id
-    chat_type = update.message.chat.type
-    user = update.message.from_user
+@router.message(F.text, ~F.text.startswith("/"))
+async def on_message(message: Message):
+    text = message.text
+    user_id = message.from_user.id
+    chat_id = message.chat.id
+    chat_type = message.chat.type
+    user = message.from_user
 
     logger.info(f"Checking message from user {user_id} in chat {chat_id}.")
 
@@ -103,27 +110,22 @@ async def check_message(update: Update, context: CallbackContext):
 
             logger.info(f"User {user_id} muted until {until}.")
 
-            context.job_queue.run_once(
-                unmute_user,
-                when=until,
-                data=(chat_id, user_id),
-                name=f"{chat_id}_{user_id}",
-            )
+            await unmute_user(message=message, user_id=user_id, chat_id=chat_id)
 
             if chat_type == "supergroup":
-                await context.bot.restrict_chat_member(
+                await message.bot.restrict_chat_member(
                     chat_id,
                     user_id,
                     permissions=ChatPermissions(can_send_messages=False),
                     until_date=until,
                 )
 
-                await update.message.reply_text(
+                await message.reply(
                     f"🚫 Пользователь @{user.username or user.full_name} был временно заблокирован на {mute_duration_hours} часов за токсичность.",
                 )
             else:
-                await update.message.delete()
-                await update.message.reply_text(
+                await message.delete()
+                await message.reply(
                     f"🚫 Пользователь @{user.username or user.full_name} был временно заблокирован на {mute_duration_hours} часов за токсичность. Сообщения будут удаляться.",
                     quote=False,
                 )

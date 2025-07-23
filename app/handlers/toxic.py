@@ -1,16 +1,18 @@
+import logging
+
+import aiosqlite
 from aiogram import Router
+from aiogram.enums.parse_mode import ParseMode
+from aiogram.filters import Command
 from aiogram.types import Message
 
 router = Router()
 
 
-@router.message()
-async def on_message(message: Message): ...
-
-
-async def toxic_users(update: Update, context: CallbackContext):
-    logger.info("Received /toxic_users command.")
-    chat_id = update.message.chat_id
+@router.message(Command("toxic_users"))
+async def on_message(message: Message):
+    logging.info("Received /toxic_users command.")
+    chat_id = message.chat.id
     async with aiosqlite.connect("mute_bot.db") as db:
         async with db.execute(
             """
@@ -25,14 +27,12 @@ async def toxic_users(update: Update, context: CallbackContext):
         ) as cursor:
             rows = await cursor.fetchall()
             if rows:
-                message = "😡 Антирейтинг самых токсичных пользователей:\n\n"
+                message_text = "😡 Антирейтинг самых токсичных пользователей:\n\n"
                 for row in rows:
                     user_id, avg_score = row
-                    user = await context.bot.get_chat_member(chat_id, user_id).user
-                    message += f"- {user.username or user.full_name} 💩 со средним уровнем токсичности {avg_score:.2f}\n"
-                message += "\nГоните их и порицайте! 🚫"
-                await update.message.reply_text(message, parse_mode=ParseMode.HTML)
+                    user = (await message.bot.get_chat_member(chat_id, user_id)).user
+                    message_text += f"- <a href='tg://user?id={user_id}'>{user.username or user.full_name}</a> 💩 со средним уровнем токсичности {avg_score:.2f}\n"
+                message_text += "\nГоните их и порицайте! 🚫"
+                await message.reply(message_text, parse_mode=ParseMode.HTML)
             else:
-                await update.message.reply_text(
-                    "😊 В этом чате нет токсичных пользователей."
-                )
+                await message.reply("😊 В этом чате нет токсичных пользователей.")

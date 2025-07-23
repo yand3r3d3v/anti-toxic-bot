@@ -5,14 +5,12 @@ import aiosqlite
 from aiogram import Bot, Dispatcher
 from config import config
 from handlers import routers
-from perspective import Attribute, Perspective
 
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levellevel)s - %(message)s", level=logging.INFO
-)
+# logging.basicConfig(
+#     format="%(asctime)s - %(name)s - %(level)s - %(message)s", level=logging.INFO
+# )
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-p = Perspective(key=config.PERSPECTIVE_API_KEY)
 
 ADMIN_USERNAME = config.ADMIN_USERNAMES
 
@@ -60,13 +58,13 @@ async def main():
     logger.info("Starting bot...")
     bot = Bot(config.TELEGRAM_BOT_TOKEN)
 
-    dp = Dispatcher(bot)
+    dp = Dispatcher()
 
     # routers
     dp.include_routers(*routers)
 
     logger.info("Bot started.")
-    await dp.start_polling()
+    await dp.start_polling(bot)
 
     # app.add_handler(CommandHandler("start", start))
     # app.add_handler(CommandHandler("muted_users", muted_users))

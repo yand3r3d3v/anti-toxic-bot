@@ -1,12 +1,46 @@
+import logging
+
+import aiosqlite
 from aiogram import Router
+from aiogram.enums import ParseMode
+from aiogram.filters import Command
 from aiogram.types import Message
+from aiogram.types.chat_permissions import ChatPermissions
+from config import config
 
 router = Router()
+logger = logging.getLogger(__name__)
 
 
-async def unmute_user(context: CallbackContext):
-    job = context.job or None
-    chat_id, user_id = job.data if job else context.args
+@router.message(Command("unmute"))
+async def unmute_command(message: Message):
+    logger.info("Received /unmute command.")
+    username = message.from_user.username
+    if username not in config.ADMIN_USERNAMES:
+        await message.reply("У вас нет прав для использования этой команды.")
+        return
+    args = message.split()
+
+    if len(args) < 2:
+        await message.reply("Правильное использованием команды /unmute (USER_ID)")
+        return
+
+    try:
+        int(args[1])
+    except (IndexError, ValueError):
+        await message.reply(
+            "❌ Пожалуйста, укажите корректный ID пользователя для разблокировки."
+        )
+        return
+
+    await unmute_user(message=message)
+
+
+async def unmute_user(message: Message, **kwargs):
+    if not (chat_id := kwargs.get("chat_id", None)):
+        chat_id = message.chat.id
+    if not (user_id := kwargs.get("user_id", None)):
+        user_id = message.text.split(" ")[1]
 
     logger.info(f"Unmuting user {user_id} in chat {chat_id}.")
 
@@ -16,39 +50,15 @@ async def unmute_user(context: CallbackContext):
         )
         await db.commit()
 
-    chat = await context.bot.get_chat(chat_id)
-    user = await context.bot.get_chat_member(chat_id, user_id).user
+    chat = await message.bot.get_chat(chat_id)
+    user = (await message.bot.get_chat_member(chat_id, user_id)).user
     if chat.type == "supergroup":
-        await context.bot.restrict_chat_member(
+        await message.bot.restrict_chat_member(
             chat_id, user_id, permissions=ChatPermissions(can_send_messages=True)
         )
 
-    await context.bot.send_message(
+    await message.bot.send_message(
         chat_id,
         text=f"✅ Пользователь <a href='tg://user?id={user_id}'>{user.username or user.full_name}</a> был разблокирован.",
         parse_mode=ParseMode.HTML,
-    )
-
-
-async def unmute_command(update: Update, context: CallbackContext):
-    username = update.message.from_user.username
-    if username not in config.ADMIN_USERNAMES:
-        await update.message.reply_text(
-            "⛔ У вас нет прав для использования этой команды."
-        )
-        return
-
-    try:
-        user_id = int(context.args[0])
-    except (IndexError, ValueError):
-        await update.message.reply_text(
-            "❌ Пожалуйста, укажите корректный ID пользователя для разблокировки."
-        )
-        return
-
-    chat_id = update.message.chat_id
-    await unmute_user(
-        context=CallbackContext.from_update(update, context.application),
-        chat_id=chat_id,
-        user_id=user_id,
     )
