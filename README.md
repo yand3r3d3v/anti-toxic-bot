@@ -68,7 +68,7 @@ Perspective API бесплатен и доступен для использов
 
 1. Клонируйте репозиторий:
    ```bash
-   git clone https://github.com/0niel/anti-toxic-bot.git
+   git clone https://github.com/yand3r3d3v/anti-toxic-bot.git
    ```
 2. Перейдите в директорию проекта:
    ```bash
@@ -76,16 +76,12 @@ Perspective API бесплатен и доступен для использов
    ```
 3. Соберите Docker-образ:
    ```bash
-   docker build -t tg-bot .
+   docker build -t antitoxicbot .
    ```
 4. Создайте файл `.env` и добавьте ваши ключи API:
    ```env
    PERSPECTIVE_API_KEY=your_perspective_api_key
    TELEGRAM_BOT_TOKEN=your_telegram_bot_token
-   ```
-5. Запустите контейнер:
-   ```bash
-   docker run --env-file .env -p 5000:5000 --name tg-bot tg-bot
    ```
 
 ## Запуск 🚀
@@ -101,7 +97,7 @@ Perspective API бесплатен и доступен для использов
 
 1. Запустите контейнер:
    ```bash
-   docker run --env-file .env -p 5000:5000 --name tg-bot tg-bot
+   docker run --env-file .env --name bot antitoxicbot
    ```
 
 ## Команды 📋
