@@ -4,15 +4,33 @@ import logging
 import aiosqlite
 from aiogram import Bot, Dispatcher
 from config import config
+from db import Repository, SQLiteRepository
+from dishka import Provider, Scope, make_async_container, provide
+from dishka.integrations.aiogram import setup_dishka
 from handlers import routers
+from perspective import Perspective
+from toxiticy import PerspectiveToxicity, ToxicityRepository
 
-# logging.basicConfig(
-#     format="%(asctime)s - %(name)s - %(level)s - %(message)s", level=logging.INFO
-# )
+
+class ToxicityProvider(Provider):
+    @provide(scope=Scope.APP)
+    def get_toxiticy(self) -> ToxicityRepository:
+        return PerspectiveToxicity(
+            perspective=Perspective(key=config.PERSPECTIVE_API_KEY)
+        )
+
+
+class RepositoryProvider(Provider):
+    @provide(scope=Scope.APP)
+    def get_db(self) -> Repository:
+        repo = SQLiteRepository(database_url=config.DATABASE_URL)
+        return repo
+
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-ADMIN_USERNAME = config.ADMIN_USERNAMES
+ADMIN_USERNAME = config.ADMIN_IDS
 
 
 async def init_db():
@@ -53,6 +71,7 @@ async def init_db():
 
 
 async def main():
+    container = make_async_container(ToxicityProvider(), RepositoryProvider())
     await init_db()
 
     logger.info("Starting bot...")
@@ -64,16 +83,8 @@ async def main():
     dp.include_routers(*routers)
 
     logger.info("Bot started.")
+    setup_dishka(router=dp, container=container, auto_inject=True)
     await dp.start_polling(bot)
-
-    # app.add_handler(CommandHandler("start", start))
-    # app.add_handler(CommandHandler("muted_users", muted_users))
-    # app.add_handler(
-    #     CommandHandler("unmute", unmute_command, filters=filters.ChatType.GROUPS)
-    # )
-    # app.add_handler(CommandHandler("toxic_users", toxic_users))
-    # app.add_handler(CommandHandler("mute_history", mute_history))
-    # app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, check_message))
 
 
 if __name__ == "__main__":

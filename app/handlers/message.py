@@ -5,40 +5,25 @@ import aiosqlite
 from aiogram import F, Router
 from aiogram.types import Message
 from aiogram.types.chat_permissions import ChatPermissions
-from config import config
+from dishka import FromDishka
 from handlers.unmute import unmute_user
-from perspective import Attribute, Perspective
-
-p = Perspective(key=config.PERSPECTIVE_API_KEY)
-
+from toxiticy import ToxicityRepository
 
 router = Router()
 logger = logging.getLogger(__name__)
 
 
 @router.message(F.text, ~F.text.startswith("/"))
-async def on_message(message: Message):
-    text = message.text
+async def on_message(
+    message: Message,
+    toxicticy: FromDishka[ToxicityRepository],
+):
     user_id = message.from_user.id
     chat_id = message.chat.id
     chat_type = message.chat.type
     user = message.from_user
 
-    logger.info(f"Checking message from user {user_id} in chat {chat_id}.")
-
-    response = await p.score(
-        text,
-        attributes=[
-            Attribute.SEVERE_TOXICITY,
-            Attribute.TOXICITY,
-            Attribute.SEXUALLY_EXPLICIT,
-            Attribute.INSULT,
-        ],
-    )
-
-    logger.info(
-        f"Perspective API response for user {user_id}: {[response.toxicity, response.severe_toxicity, response.sexually_explicit, response.insult]}"
-    )
+    response = await toxicticy.get_toxic_score(message=message)
 
     # Accumulate toxicity score
     score = max(

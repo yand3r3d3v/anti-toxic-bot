@@ -1,11 +1,12 @@
 import logging
 from datetime import datetime
 
-import aiosqlite
 from aiogram import Router
 from aiogram.enums.parse_mode import ParseMode
 from aiogram.filters import Command
 from aiogram.types import Message
+from db import Repository
+from dishka import FromDishka
 from telegram_bot_pagination import InlineKeyboardPaginator
 
 router = Router()
@@ -14,25 +15,17 @@ logger = logging.getLogger(__name__)
 
 
 @router.message(Command("mute_history"))
-async def on_message(message: Message):
+async def on_message(message: Message, repository: FromDishka[Repository]):
     logger.info("Received /mute_history command.")
-    chat_id = message.chat_id
+    chat_id = message.chat.id
     user_id = message.from_user.id
     # page = int(context.args[0]) if context.args else 1
     page = 1
     items_per_page = 10
 
-    async with aiosqlite.connect("mute_bot.db") as db:
-        async with db.execute(
-            "SELECT COUNT(*) FROM mutes WHERE chat_id = ?", (chat_id,)
-        ) as cursor:
-            total_records = await cursor.fetchone()[0]
-
-        async with db.execute(
-            "SELECT user_id, until FROM mutes WHERE chat_id = ? ORDER BY until DESC LIMIT ? OFFSET ?",
-            (chat_id, items_per_page, (page - 1) * items_per_page),
-        ) as cursor:
-            rows = await cursor.fetchall()
+    total_records, rows = await repository.get_mute_history(
+        chat_id=chat_id, page=page, items_per_page=items_per_page
+    )
 
     if rows:
         message = "📜 История блокировок:\n\n"
