@@ -5,18 +5,17 @@ from aiogram import Router
 from aiogram.enums.parse_mode import ParseMode
 from aiogram.filters import Command
 from aiogram.types import Message
-from db import Repository
-from dishka import FromDishka
+from core.database import Database
 
 router = Router()
 logger = logging.getLogger(__name__)
 
 
 @router.message(Command("muted_users"))
-async def muted_users(message: Message, repository: FromDishka[Repository]):
+async def muted_users(message: Message, db: Database):
     logger.info("Received /muted_users command.")
     chat_id = message.chat.id
-    rows = await repository.get_muted_users(chat_id=chat_id)
+    rows = await db.get_muted_users(chat_id=chat_id)
     if rows:
         message_text = "🚫 Временно заблокированные пользователи:\n\n"
         for row in rows:

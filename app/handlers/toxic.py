@@ -4,17 +4,16 @@ from aiogram import Router
 from aiogram.enums.parse_mode import ParseMode
 from aiogram.filters import Command
 from aiogram.types import Message
-from db import Repository
-from dishka import FromDishka
+from core.database import Database
 
 router = Router()
 
 
 @router.message(Command("toxic_users"))
-async def on_message(message: Message, repository: FromDishka[Repository]):
+async def on_message(message: Message, db: Database):
     logging.info("Received /toxic_users command.")
     chat_id = message.chat.id
-    rows = await repository.get_toxiticy_rating(chat_id=chat_id)
+    rows = await db.get_toxiticy_rating(chat_id=chat_id)
     if rows:
         message_text = "😡 Антирейтинг самых токсичных пользователей:\n\n"
         for row in rows:

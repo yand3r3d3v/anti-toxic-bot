@@ -113,3 +113,6 @@ dmypy.json
 
 # Logs
 *.log
+
+# Database
+*.db

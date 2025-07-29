@@ -19,7 +19,6 @@ aiosqlite = "^0.20.0"
 perspectiveapi = "^1.1.0"
 python-telegram-bot-pagination = "^0.0.3"
 aiogram = "^3.21.0"
-dishka = "^1.6.0"
 tenacity = "^9.1.2"
 
 [tool.poetry.group.dev.dependencies]

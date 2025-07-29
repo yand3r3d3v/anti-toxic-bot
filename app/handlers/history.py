@@ -5,8 +5,7 @@ from aiogram import Router
 from aiogram.enums.parse_mode import ParseMode
 from aiogram.filters import Command
 from aiogram.types import Message
-from db import Repository
-from dishka import FromDishka
+from core.database import Database
 from telegram_bot_pagination import InlineKeyboardPaginator
 
 router = Router()
@@ -15,15 +14,15 @@ logger = logging.getLogger(__name__)
 
 
 @router.message(Command("mute_history"))
-async def on_message(message: Message, repository: FromDishka[Repository]):
+async def on_message(message: Message, db: Database):
     logger.info("Received /mute_history command.")
     chat_id = message.chat.id
     user_id = message.from_user.id
-    # page = int(context.args[0]) if context.args else 1
-    page = 1
+
+    page = int(message.text.split()[1]) if len(message.text.split()) > 1 else 1
     items_per_page = 10
 
-    total_records, rows = await repository.get_mute_history(
+    total_records, rows = await db.get_mute_history(
         chat_id=chat_id, page=page, items_per_page=items_per_page
     )
 
